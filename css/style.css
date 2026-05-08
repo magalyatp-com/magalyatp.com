@@ -694,6 +694,67 @@ footer {
   white-space: nowrap;
 }
 
+/* ===== EASTER EGG ===== */
+.egg-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.93);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.egg-overlay.open { display: flex; }
+
+.egg-card {
+  background: #004C54;
+  border: 2px solid #A5ACAF;
+  padding: 3rem 4.5rem;
+  text-align: center;
+  animation: eggPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  pointer-events: none;
+}
+
+.egg-bird {
+  font-size: 5.5rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+  display: block;
+  animation: wingFlap 0.6s ease-in-out infinite alternate;
+}
+
+.egg-shout {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: clamp(2.8rem, 10vw, 5.5rem);
+  font-weight: 800;
+  color: #A5ACAF;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 40px rgba(165,172,175,0.4);
+  line-height: 1;
+}
+
+.egg-dismiss {
+  display: block;
+  margin-top: 1.25rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(165,172,175,0.35);
+}
+
+@keyframes eggPop {
+  from { transform: scale(0.2) rotate(-8deg); opacity: 0; }
+  to   { transform: scale(1)   rotate(0deg);  opacity: 1; }
+}
+
+@keyframes wingFlap {
+  from { transform: scaleY(1)    rotate(-5deg); }
+  to   { transform: scaleY(0.75) rotate(5deg);  }
+}
+
 /* ===== ANIMATIONS ===== */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(22px); }
