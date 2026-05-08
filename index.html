@@ -3,48 +3,154 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <title>Magaly ATP - Under Construction</title>
+  <title>Magaly ATP — Art Through Photography</title>
+  <meta name="description" content="Magaly ATP — Art Through Photography. Specializing in events, proms, weddings, engagements, and artistic storytelling photography." />
 
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: #0b0b0b;
-    }
-
-    .container {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-    }
-
-    h1 {
-      color: white;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: 24px;
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
-      text-shadow: 0 4px 18px rgba(0,0,0,0.6);
-    }
-
-    img {
-      max-width: min(900px, 100%);
-      max-height: 80vh;
-      border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>🚧 Site Under Construction 🚧</h1>
-    <img src="images/under_construction.png" alt="Under Construction" />
-  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <img
+        src="images/logo.png"
+        alt="Magaly ATP"
+        class="nav-logo-img"
+        onerror="this.style.display='none'"
+      />
+      <span class="nav-logo-text">Magaly ATP</span>
+    </a>
+    <button class="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="events.html">Events</a></li>
+      <li><a href="storytelling.html">Storytelling</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-logo-wrap">
+      <img
+        src="images/logo.png"
+        alt="Magaly ATP — Art Through Photography"
+        class="hero-logo"
+        onerror="this.parentElement.classList.add('logo-missing')"
+      />
+      <div class="hero-logo-fallback">
+        <span class="hero-logo-name">Magaly ATP</span>
+        <span class="hero-logo-sub">Art Through Photography</span>
+      </div>
+    </div>
+
+    <p class="hero-tagline">Capturing life's most meaningful moments</p>
+
+    <div class="hero-cta">
+      <a href="events.html" class="btn btn-primary">View Events</a>
+      <a href="storytelling.html" class="btn btn-outline">Storytelling</a>
+    </div>
+
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="categories">
+    <!-- Events -->
+    <a href="events.html" class="category-card">
+      <div class="category-card-bg"></div>
+      <div class="category-card-overlay">
+        <span class="category-card-label">Gallery</span>
+        <h2 class="category-card-title">Events</h2>
+        <p class="category-card-subs">Proms &nbsp;·&nbsp; Engagements &nbsp;·&nbsp; Weddings</p>
+        <div class="category-card-arrow">→</div>
+      </div>
+    </a>
+
+    <!-- Storytelling -->
+    <a href="storytelling.html" class="category-card">
+      <div class="category-card-bg"></div>
+      <div class="category-card-overlay">
+        <span class="category-card-label">Gallery</span>
+        <h2 class="category-card-title">Storytelling</h2>
+        <p class="category-card-subs">Artistic &nbsp;·&nbsp; Conceptual &nbsp;·&nbsp; Narrative</p>
+        <div class="category-card-arrow">→</div>
+      </div>
+    </a>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about">
+    <span class="section-label">About</span>
+    <h2 class="section-title">The Artist Behind the Lens</h2>
+    <div class="section-divider"></div>
+    <p class="about-text">
+      Magaly is a visual storyteller who believes every frame is a conversation between
+      light and memory. Based in New Jersey, she specializes in capturing the moments that
+      matter most — from the excitement of prom night to the quiet intimacy of an
+      engagement, the joyful chaos of a wedding day, and the raw narrative of life lived fully.
+    </p>
+    <p class="about-text">
+      Her approach is both intuitive and intentional, finding beauty in the unscripted
+      details and emotion in every glance. Whether shooting editorial or documentary,
+      each photograph is crafted to last a lifetime.
+    </p>
+    <blockquote class="about-quote">
+      "Photography is the art of making the invisible visible."
+    </blockquote>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="contact-inner">
+      <span class="section-label">Contact</span>
+      <h2 class="section-title">Let's Work Together</h2>
+      <div class="section-divider"></div>
+      <p class="about-text">
+        Available for bookings in New Jersey and surrounding areas.
+        Reach out to discuss your vision.
+      </p>
+      <div class="contact-links">
+        <a href="mailto:hello@magalyatp.com" class="contact-link">
+          ✉ Email
+        </a>
+        <a href="https://instagram.com/magalyatp" class="contact-link" target="_blank" rel="noopener">
+          ◈ Instagram
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; <span id="year"></span> Magaly ATP — Art Through Photography. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    // Mobile nav init (no page-specific gallery needed on home)
+    const toggle = document.querySelector('.nav-toggle');
+    const links  = document.querySelector('.nav-links');
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+    links.querySelectorAll('a').forEach(a =>
+      a.addEventListener('click', () => {
+        links.classList.remove('open');
+        toggle.classList.remove('open');
+        document.body.style.overflow = '';
+      })
+    );
+  </script>
 </body>
 </html>
