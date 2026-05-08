@@ -133,6 +133,15 @@
     </div>
   </section>
 
+  <!-- EASTER EGG -->
+  <div id="eagles-egg" class="egg-overlay" role="dialog" aria-label="Go Birds!">
+    <div class="egg-card">
+      <span class="egg-bird">🦅</span>
+      <div class="egg-shout">Go Birds!</div>
+      <span class="egg-dismiss">Click anywhere to close</span>
+    </div>
+  </div>
+
   <footer>
     <p>&copy; <span id="year"></span> Magaly ATP — Art Through Photography. All rights reserved.</p>
   </footer>
@@ -154,6 +163,25 @@
         document.body.style.overflow = '';
       })
     );
+  </script>
+  <script>
+    // Easter egg — press E
+    const egg = document.getElementById('eagles-egg');
+    let eggTimer;
+    function closeEgg() {
+      clearTimeout(eggTimer);
+      egg.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    egg.addEventListener('click', closeEgg);
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'e' && e.key !== 'E') return;
+      if (document.activeElement.tagName === 'INPUT') return;
+      if (egg.classList.contains('open')) { closeEgg(); return; }
+      egg.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      eggTimer = setTimeout(closeEgg, 5000);
+    });
   </script>
 </body>
 </html>
