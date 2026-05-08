@@ -1,2 +1,2 @@
 # magalyatp.com
-Under Construction Webpage for magalyatp.com
+Webpage for magalyatp.com
