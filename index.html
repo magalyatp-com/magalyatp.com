@@ -15,7 +15,7 @@
 
   <!-- NAV -->
   <nav class="nav">
-    <a href="index.html" class="nav-logo">
+    <a href="index.html" class="nav-logo" id="logo-trigger">
       <img
         src="images/logo.png"
         alt="Magaly ATP"
@@ -134,13 +134,34 @@
   </section>
 
   <!-- EASTER EGG -->
-  <div id="eagles-egg" class="egg-overlay" role="dialog" aria-label="Go Birds!">
-    <div class="egg-card">
-      <span class="egg-bird">🦅</span>
-      <div class="egg-shout">Go Birds!</div>
-      <span class="egg-dismiss">Click anywhere to close</span>
+  <div id="eagles-egg" role="dialog" aria-label="Go Birds!" style="
+    display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.93);
+    align-items:center; justify-content:center; cursor:pointer;
+  ">
+    <div style="
+      background:#004C54; border:2px solid #A5ACAF;
+      padding:2.5rem 4rem; text-align:center;
+      animation:eggPop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    ">
+      <div style="font-size:5rem; line-height:1; margin-bottom:0.75rem;
+        animation:wingFlap 0.55s ease-in-out infinite alternate;">🦅</div>
+      <div style="font-family:system-ui,sans-serif; font-size:clamp(2.5rem,8vw,5rem);
+        font-weight:800; color:#A5ACAF; letter-spacing:0.08em;">Go Birds!</div>
+      <div style="margin-top:1rem; font-size:0.65rem; letter-spacing:0.25em;
+        text-transform:uppercase; color:rgba(165,172,175,0.4);">Click anywhere to close</div>
     </div>
   </div>
+  <style>
+    @keyframes eggPop {
+      from { transform:scale(0.2) rotate(-8deg); opacity:0; }
+      to   { transform:scale(1)   rotate(0deg);  opacity:1; }
+    }
+    @keyframes wingFlap {
+      from { transform:scaleY(1)    rotate(-6deg); }
+      to   { transform:scaleY(0.72) rotate(6deg);  }
+    }
+  </style>
 
   <footer>
     <p>&copy; <span id="year"></span> Magaly ATP — Art Through Photography. All rights reserved.</p>
@@ -165,20 +186,18 @@
     );
   </script>
   <script>
-    // Easter egg — press E
+    // Easter egg — click the logo
     const egg = document.getElementById('eagles-egg');
     let eggTimer;
     function closeEgg() {
       clearTimeout(eggTimer);
-      egg.classList.remove('open');
+      egg.style.display = 'none';
       document.body.style.overflow = '';
     }
     egg.addEventListener('click', closeEgg);
-    document.addEventListener('keydown', e => {
-      if (e.key !== 'e' && e.key !== 'E') return;
-      if (document.activeElement.tagName === 'INPUT') return;
-      if (egg.classList.contains('open')) { closeEgg(); return; }
-      egg.classList.add('open');
+    document.getElementById('logo-trigger').addEventListener('click', function(e) {
+      e.preventDefault();
+      egg.style.display = 'flex';
       document.body.style.overflow = 'hidden';
       eggTimer = setTimeout(closeEgg, 5000);
     });
