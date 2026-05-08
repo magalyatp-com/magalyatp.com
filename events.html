@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Events — Magaly ATP</title>
+  <meta name="description" content="Event photography by Magaly ATP — proms, engagements, and weddings." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="events">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <img
+        src="images/logo.png"
+        alt="Magaly ATP"
+        class="nav-logo-img"
+        onerror="this.style.display='none'"
+      />
+      <span class="nav-logo-text">Magaly ATP</span>
+    </a>
+    <button class="nav-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="events.html" class="active">Events</a></li>
+      <li><a href="storytelling.html">Storytelling</a></li>
+      <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <span class="page-header-label">Gallery</span>
+    <h1 class="page-header-title">Events</h1>
+    <p class="page-header-sub">Proms &nbsp;·&nbsp; Engagements &nbsp;·&nbsp; Weddings</p>
+  </header>
+
+  <!-- TABS -->
+  <div class="gallery-tabs">
+    <button class="gallery-tab active" data-tab="all">All</button>
+    <button class="gallery-tab" data-tab="proms">Proms</button>
+    <button class="gallery-tab" data-tab="engagements">Engagements</button>
+    <button class="gallery-tab" data-tab="weddings">Weddings</button>
+  </div>
+
+  <!-- GALLERY -->
+  <section class="gallery-section">
+    <div class="gallery-grid" id="gallery-grid"></div>
+  </section>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+    <img class="lightbox-img" id="lightbox-img" src="" alt="" />
+    <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+    <button class="lightbox-prev"  id="lightbox-prev"  aria-label="Previous">‹</button>
+    <button class="lightbox-next"  id="lightbox-next"  aria-label="Next">›</button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+  </div>
+
+  <footer>
+    <p>&copy; <span id="year"></span> Magaly ATP — Art Through Photography. All rights reserved.</p>
+  </footer>
+
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+  <script src="js/gallery.js"></script>
+</body>
+</html>
