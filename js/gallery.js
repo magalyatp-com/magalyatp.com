@@ -118,17 +118,20 @@ async function initEventsGallery() {
     showLoading(grid);
     let photos;
     if (tab === 'all') {
-      const [proms, engagements, weddings] = await Promise.all([
-        fetchPhotos('photos/events/proms'),
+      const [engagements, weddings, proms, storytelling] = await Promise.all([
         fetchPhotos('photos/events/engagements'),
         fetchPhotos('photos/events/weddings'),
+        fetchPhotos('photos/events/proms'),
+        fetchPhotos('photos/storytelling'),
       ]);
-      const all = [proms, engagements, weddings];
+      const all = [engagements, weddings, proms, storytelling];
       if (all.every(p => p === null)) {
         photos = null;
       } else {
         photos = all.flatMap(p => p || []);
       }
+    } else if (tab === 'storytelling') {
+      photos = await fetchPhotos('photos/storytelling');
     } else {
       photos = await fetchPhotos(`photos/events/${tab}`);
     }
