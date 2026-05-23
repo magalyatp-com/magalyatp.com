@@ -1,4 +1,4 @@
-const REPO = 'magalyatp-com/magalyatp.com';
+const REPO   = 'magalyatp-com/magalyatp.com';
 const BRANCH = 'main';
 const IMG_EXT = /\.(jpg|jpeg|png|webp|gif|avif)$/i;
 
@@ -40,9 +40,9 @@ const lightbox = (() => {
 
     document.addEventListener('keydown', e => {
       if (!el.classList.contains('open')) return;
-      if (e.key === 'Escape')      close();
-      if (e.key === 'ArrowLeft')   prev();
-      if (e.key === 'ArrowRight')  next();
+      if (e.key === 'Escape')     close();
+      if (e.key === 'ArrowLeft')  prev();
+      if (e.key === 'ArrowRight') next();
     });
   }
 
@@ -62,11 +62,52 @@ async function fetchPhotos(path) {
       .filter(f => f.type === 'file' && IMG_EXT.test(f.name))
       .map(f => ({ name: f.name, url: f.download_url }));
   } catch {
-    return null; // signals error vs empty
+    return null;
   }
 }
 
-/* ===== RENDER ===== */
+async function fetchSubfolders(path) {
+  const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
+    if (res.status === 404) return [];
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data.filter(f => f.type === 'dir' && !f.name.startsWith('.'));
+  } catch {
+    return null;
+  }
+}
+
+/* ===== FOLDER HELPERS ===== */
+function parseFolderName(name) {
+  const m = name.match(/^(\d{4}-\d{2}-\d{2})[- _](.+)$/);
+  if (m) {
+    const date      = new Date(m[1] + 'T12:00:00');
+    const label     = m[2].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const dateLabel = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return { label, dateLabel, date };
+  }
+  return {
+    label:     name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    dateLabel: null,
+    date:      null,
+  };
+}
+
+function sortByDate(folders) {
+  return [...folders].sort((a, b) => {
+    const da = parseFolderName(a.name).date;
+    const db = parseFolderName(b.name).date;
+    if (da && db) return db - da;
+    if (da) return -1;
+    if (db) return 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+/* ===== RENDER HELPERS ===== */
 function showLoading(wrap) {
   wrap.innerHTML = `
     <div class="gallery-state">
@@ -106,56 +147,59 @@ function renderGallery(wrap, photos) {
   });
 }
 
+function renderAlbumGrid(grid, folders, onOpen) {
+  grid.classList.add('album-view');
+  grid.innerHTML = '';
+
+  if (!folders || folders.length === 0) {
+    grid.classList.remove('album-view');
+    grid.innerHTML = `
+      <div class="gallery-state">
+        <p class="gallery-empty-title">Coming soon</p>
+        <p class="gallery-empty-sub">Check back for new work.</p>
+      </div>`;
+    return;
+  }
+
+  sortByDate(folders).forEach(folder => {
+    const info = parseFolderName(folder.name);
+    const card = document.createElement('div');
+    card.className = 'album-card';
+    card.innerHTML = `
+      <div class="album-thumb-wrap">
+        <div class="album-thumb-placeholder"></div>
+      </div>
+      <div class="album-info">
+        ${info.dateLabel ? `<span class="album-date">${info.dateLabel}</span>` : ''}
+        <span class="album-name">${info.label}</span>
+        ${folder._category ? `<span class="album-category">${folder._category}</span>` : ''}
+      </div>`;
+    card.addEventListener('click', () => onOpen(folder.path, info.label));
+    grid.appendChild(card);
+
+    fetchPhotos(folder.path).then(photos => {
+      if (!photos || photos.length === 0) return;
+      const wrap = card.querySelector('.album-thumb-wrap');
+      const img  = new Image();
+      img.src     = photos[0].url;
+      img.alt     = info.label;
+      img.loading = 'lazy';
+      wrap.innerHTML = '';
+      wrap.appendChild(img);
+    });
+  });
+}
+
 /* ===== EVENTS PAGE ===== */
 async function initEventsGallery() {
-  const grid        = document.getElementById('gallery-grid');
-  const breadcrumb  = document.getElementById('gallery-breadcrumb');
-  const tabs        = document.querySelectorAll('.gallery-tab[data-tab]');
+  const grid       = document.getElementById('gallery-grid');
+  const breadcrumb = document.getElementById('gallery-breadcrumb');
+  const tabs       = document.querySelectorAll('.gallery-tab[data-tab]');
   if (!grid || !tabs.length) return;
 
   lightbox.init();
   let currentTab = 'all';
 
-  /* -- helpers -- */
-  async function fetchSubfolders(path) {
-    const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
-    try {
-      const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
-      if (res.status === 404) return [];
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!Array.isArray(data)) return [];
-      return data.filter(f => f.type === 'dir' && !f.name.startsWith('.'));
-    } catch { return null; }
-  }
-
-  function parseFolderName(name) {
-    const m = name.match(/^(\d{4}-\d{2}-\d{2})[- _](.+)$/);
-    if (m) {
-      const date     = new Date(m[1] + 'T12:00:00');
-      const label    = m[2].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      const dateLabel = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      return { label, dateLabel, date };
-    }
-    return {
-      label: name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      dateLabel: null,
-      date: null,
-    };
-  }
-
-  function sortByDate(folders) {
-    return [...folders].sort((a, b) => {
-      const da = parseFolderName(a.name).date;
-      const db = parseFolderName(b.name).date;
-      if (da && db) return db - da;
-      if (da) return -1;
-      if (db) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }
-
-  /* -- breadcrumb -- */
   function hideBreadcrumb() {
     breadcrumb.style.display = 'none';
     breadcrumb.innerHTML = '';
@@ -164,7 +208,7 @@ async function initEventsGallery() {
   function showBreadcrumb(label) {
     breadcrumb.style.display = 'flex';
     breadcrumb.innerHTML = `
-      <button class="breadcrumb-back" id="breadcrumb-back">← All Events</button>
+      <button class="breadcrumb-back" id="breadcrumb-back">← Back</button>
       <span class="breadcrumb-sep">/</span>
       <span class="breadcrumb-current">${label}</span>`;
     document.getElementById('breadcrumb-back').addEventListener('click', () => {
@@ -173,50 +217,6 @@ async function initEventsGallery() {
     });
   }
 
-  /* -- album grid (folder thumbnails) -- */
-  function renderAlbumGrid(folders) {
-    grid.classList.add('album-view');
-    grid.innerHTML = '';
-
-    if (!folders || folders.length === 0) {
-      grid.classList.remove('album-view');
-      grid.innerHTML = `<div class="gallery-state">
-        <p class="gallery-empty-title">Coming soon</p>
-        <p class="gallery-empty-sub">Check back for new work.</p>
-      </div>`;
-      return;
-    }
-
-    sortByDate(folders).forEach(folder => {
-      const info = parseFolderName(folder.name);
-      const card = document.createElement('div');
-      card.className = 'album-card';
-      card.innerHTML = `
-        <div class="album-thumb-wrap">
-          <div class="album-thumb-placeholder"></div>
-        </div>
-        <div class="album-info">
-          ${info.dateLabel ? `<span class="album-date">${info.dateLabel}</span>` : ''}
-          <span class="album-name">${info.label}</span>
-          ${folder._category ? `<span class="album-category">${folder._category}</span>` : ''}
-        </div>`;
-      card.addEventListener('click', () => openAlbum(folder.path, info.label));
-      grid.appendChild(card);
-
-      fetchPhotos(folder.path).then(photos => {
-        if (!photos || photos.length === 0) return;
-        const wrap = card.querySelector('.album-thumb-wrap');
-        const img  = new Image();
-        img.src     = photos[0].url;
-        img.alt     = info.label;
-        img.loading = 'lazy';
-        wrap.innerHTML = '';
-        wrap.appendChild(img);
-      });
-    });
-  }
-
-  /* -- drill into an album -- */
   async function openAlbum(path, label) {
     showLoading(grid);
     grid.classList.remove('album-view');
@@ -225,7 +225,6 @@ async function initEventsGallery() {
     renderGallery(grid, photos);
   }
 
-  /* -- main tab loader -- */
   async function loadTab(tab) {
     currentTab = tab;
     hideBreadcrumb();
@@ -233,19 +232,21 @@ async function initEventsGallery() {
     grid.classList.remove('album-view');
 
     if (tab === 'all') {
-      const [eng, wed, prom] = await Promise.all([
-        fetchSubfolders('photos/events/engagements'),
-        fetchSubfolders('photos/events/weddings'),
-        fetchSubfolders('photos/events/proms'),
+      const [eng, wed, prom, evt] = await Promise.all([
+        fetchSubfolders('photos/gallery/engagements'),
+        fetchSubfolders('photos/gallery/weddings'),
+        fetchSubfolders('photos/gallery/proms'),
+        fetchSubfolders('photos/gallery/events'),
       ]);
-      renderAlbumGrid([
+      renderAlbumGrid(grid, [
         ...(eng  || []).map(f => ({ ...f, _category: 'Engagement' })),
         ...(wed  || []).map(f => ({ ...f, _category: 'Wedding' })),
         ...(prom || []).map(f => ({ ...f, _category: 'Prom' })),
-      ]);
+        ...(evt  || []).map(f => ({ ...f, _category: 'Event' })),
+      ], openAlbum);
     } else {
-      const folders = await fetchSubfolders(`photos/events/${tab}`);
-      renderAlbumGrid(folders);
+      const folders = await fetchSubfolders(`photos/gallery/${tab}`);
+      renderAlbumGrid(grid, folders, openAlbum);
     }
   }
 
@@ -262,12 +263,46 @@ async function initEventsGallery() {
 
 /* ===== STORYTELLING PAGE ===== */
 async function initStorytellingGallery() {
-  const grid = document.getElementById('gallery-grid');
+  const grid       = document.getElementById('gallery-grid');
+  const breadcrumb = document.getElementById('gallery-breadcrumb');
   if (!grid) return;
+
   lightbox.init();
-  showLoading(grid);
-  const photos = await fetchPhotos('photos/storytelling');
-  renderGallery(grid, photos);
+  let loaded = false;
+
+  function hideBreadcrumb() {
+    breadcrumb.style.display = 'none';
+    breadcrumb.innerHTML = '';
+  }
+
+  function showBreadcrumb(label) {
+    breadcrumb.style.display = 'flex';
+    breadcrumb.innerHTML = `
+      <button class="breadcrumb-back" id="breadcrumb-back">← All Stories</button>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">${label}</span>`;
+    document.getElementById('breadcrumb-back').addEventListener('click', () => {
+      hideBreadcrumb();
+      loadAlbums();
+    });
+  }
+
+  async function openAlbum(path, label) {
+    showLoading(grid);
+    grid.classList.remove('album-view');
+    showBreadcrumb(label);
+    const photos = await fetchPhotos(path);
+    renderGallery(grid, photos);
+  }
+
+  async function loadAlbums() {
+    showLoading(grid);
+    grid.classList.remove('album-view');
+    const folders = await fetchSubfolders('photos/gallery/storytelling');
+    renderAlbumGrid(grid, folders, openAlbum);
+  }
+
+  loadAlbums();
 }
 
 /* ===== MOBILE NAV ===== */
