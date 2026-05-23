@@ -108,45 +108,156 @@ function renderGallery(wrap, photos) {
 
 /* ===== EVENTS PAGE ===== */
 async function initEventsGallery() {
-  const grid = document.getElementById('gallery-grid');
-  const tabs = document.querySelectorAll('.gallery-tab');
+  const grid        = document.getElementById('gallery-grid');
+  const breadcrumb  = document.getElementById('gallery-breadcrumb');
+  const tabs        = document.querySelectorAll('.gallery-tab[data-tab]');
   if (!grid || !tabs.length) return;
 
   lightbox.init();
+  let currentTab = 'all';
 
-  async function load(tab) {
-    showLoading(grid);
-    let photos;
-    if (tab === 'all') {
-      const [engagements, weddings, proms, storytelling] = await Promise.all([
-        fetchPhotos('photos/events/engagements'),
-        fetchPhotos('photos/events/weddings'),
-        fetchPhotos('photos/events/proms'),
-        fetchPhotos('photos/storytelling'),
-      ]);
-      const all = [engagements, weddings, proms, storytelling];
-      if (all.every(p => p === null)) {
-        photos = null;
-      } else {
-        photos = all.flatMap(p => p || []);
-      }
-    } else if (tab === 'storytelling') {
-      photos = await fetchPhotos('photos/storytelling');
-    } else {
-      photos = await fetchPhotos(`photos/events/${tab}`);
+  /* -- helpers -- */
+  async function fetchSubfolders(path) {
+    const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
+      if (res.status === 404) return [];
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) return [];
+      return data.filter(f => f.type === 'dir' && !f.name.startsWith('.'));
+    } catch { return null; }
+  }
+
+  function parseFolderName(name) {
+    const m = name.match(/^(\d{4}-\d{2}-\d{2})[- _](.+)$/);
+    if (m) {
+      const date     = new Date(m[1] + 'T12:00:00');
+      const label    = m[2].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const dateLabel = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      return { label, dateLabel, date };
     }
+    return {
+      label: name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      dateLabel: null,
+      date: null,
+    };
+  }
+
+  function sortByDate(folders) {
+    return [...folders].sort((a, b) => {
+      const da = parseFolderName(a.name).date;
+      const db = parseFolderName(b.name).date;
+      if (da && db) return db - da;
+      if (da) return -1;
+      if (db) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  /* -- breadcrumb -- */
+  function hideBreadcrumb() {
+    breadcrumb.style.display = 'none';
+    breadcrumb.innerHTML = '';
+  }
+
+  function showBreadcrumb(label) {
+    breadcrumb.style.display = 'flex';
+    breadcrumb.innerHTML = `
+      <button class="breadcrumb-back" id="breadcrumb-back">← All Events</button>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">${label}</span>`;
+    document.getElementById('breadcrumb-back').addEventListener('click', () => {
+      hideBreadcrumb();
+      loadTab(currentTab);
+    });
+  }
+
+  /* -- album grid (folder thumbnails) -- */
+  function renderAlbumGrid(folders) {
+    grid.classList.add('album-view');
+    grid.innerHTML = '';
+
+    if (!folders || folders.length === 0) {
+      grid.classList.remove('album-view');
+      grid.innerHTML = `<div class="gallery-state">
+        <p class="gallery-empty-title">Coming soon</p>
+        <p class="gallery-empty-sub">Check back for new work.</p>
+      </div>`;
+      return;
+    }
+
+    sortByDate(folders).forEach(folder => {
+      const info = parseFolderName(folder.name);
+      const card = document.createElement('div');
+      card.className = 'album-card';
+      card.innerHTML = `
+        <div class="album-thumb-wrap">
+          <div class="album-thumb-placeholder"></div>
+        </div>
+        <div class="album-info">
+          ${info.dateLabel ? `<span class="album-date">${info.dateLabel}</span>` : ''}
+          <span class="album-name">${info.label}</span>
+          ${folder._category ? `<span class="album-category">${folder._category}</span>` : ''}
+        </div>`;
+      card.addEventListener('click', () => openAlbum(folder.path, info.label));
+      grid.appendChild(card);
+
+      fetchPhotos(folder.path).then(photos => {
+        if (!photos || photos.length === 0) return;
+        const wrap = card.querySelector('.album-thumb-wrap');
+        const img  = new Image();
+        img.src     = photos[0].url;
+        img.alt     = info.label;
+        img.loading = 'lazy';
+        wrap.innerHTML = '';
+        wrap.appendChild(img);
+      });
+    });
+  }
+
+  /* -- drill into an album -- */
+  async function openAlbum(path, label) {
+    showLoading(grid);
+    grid.classList.remove('album-view');
+    showBreadcrumb(label);
+    const photos = await fetchPhotos(path);
     renderGallery(grid, photos);
+  }
+
+  /* -- main tab loader -- */
+  async function loadTab(tab) {
+    currentTab = tab;
+    hideBreadcrumb();
+    showLoading(grid);
+    grid.classList.remove('album-view');
+
+    if (tab === 'all') {
+      const [eng, wed, prom] = await Promise.all([
+        fetchSubfolders('photos/events/engagements'),
+        fetchSubfolders('photos/events/weddings'),
+        fetchSubfolders('photos/events/proms'),
+      ]);
+      renderAlbumGrid([
+        ...(eng  || []).map(f => ({ ...f, _category: 'Engagement' })),
+        ...(wed  || []).map(f => ({ ...f, _category: 'Wedding' })),
+        ...(prom || []).map(f => ({ ...f, _category: 'Prom' })),
+      ]);
+    } else {
+      const folders = await fetchSubfolders(`photos/events/${tab}`);
+      renderAlbumGrid(folders);
+    }
   }
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      load(tab.dataset.tab);
+      loadTab(tab.dataset.tab);
     });
   });
 
-  load('all');
+  loadTab('all');
 }
 
 /* ===== STORYTELLING PAGE ===== */
