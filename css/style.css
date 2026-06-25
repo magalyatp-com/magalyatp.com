@@ -646,7 +646,7 @@ footer {
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 0;
   margin-top: 2rem;
 }
 
@@ -1055,7 +1055,6 @@ footer {
   .about { padding: 4rem 1.5rem; }
 
   .gallery-section { padding: 2rem 0.75rem 4rem; }
-  .gallery-grid { gap: 3px; }
 
   .lightbox-prev, .lightbox-next { display: none; }
   .lightbox-img { max-width: 98vw; max-height: 86vh; }
