@@ -88,16 +88,8 @@ async function getImages(folder) {
     const resources = data.resources || [];
     console.log(`  "${folder}": ${resources.length} images`);
 
-    // On first page, show a sample resource so we can verify the structure
-    if (!nextCursor && resources.length > 0) {
-      console.log('  sample resource:', JSON.stringify(resources[0], null, 4));
-    }
-
     for (const r of resources) {
-      const ext = r.format ? `.${r.format}` : '';
-      results.push(
-        `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}${ext}`
-      );
+      results.push(r.secure_url);
     }
     nextCursor = data.next_cursor || null;
   } while (nextCursor);
