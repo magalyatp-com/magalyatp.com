@@ -48,18 +48,20 @@ async function getImages(folder) {
   let nextCursor = null;
 
   do {
+    // Use asset_folder for Fixed Folder mode (newer Cloudinary accounts).
+    // In this mode folder is stored separately from public_id, so prefix won't match.
     const qs = new URLSearchParams({
-      type:        'upload',
-      prefix:      folder + '/',
-      max_results: '500',
+      asset_folder: folder,
+      max_results:  '500',
       ...(nextCursor ? { next_cursor: nextCursor } : {}),
     });
-    const data = await apiRequest(`resources/image?${qs}`);
+    const data = await apiRequest(`resources?${qs}`);
     if (data.error) console.error(`  resources error for ${folder}:`, data.error.message);
     console.log(`  ${folder}: ${(data.resources || []).length} images`);
     for (const r of (data.resources || [])) {
+      const ext = r.format ? `.${r.format}` : '';
       results.push(
-        `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`
+        `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}${ext}`
       );
     }
     nextCursor = data.next_cursor || null;
@@ -73,19 +75,9 @@ async function buildCategory(category) {
   const result = [];
 
   for (const { name: albumName, path: albumPath } of albums) {
-    // Try without the top-level 'gallery/' prefix first — Cloudinary public_ids
-    // often don't include it even when the folder appears under 'gallery' in the UI.
-    const folderWithGallery    = albumPath || `gallery/${category}/${albumName}`;
-    const folderWithoutGallery = `${category}/${albumName}`;
-
-    console.log(`Fetching images for ${folderWithoutGallery}…`);
-    let images = await getImages(folderWithoutGallery);
-
-    if (images.length === 0) {
-      console.log(`  0 found, retrying with ${folderWithGallery}…`);
-      images = await getImages(folderWithGallery);
-    }
-
+    const folder = albumPath || `gallery/${category}/${albumName}`;
+    console.log(`Fetching images for ${folder}…`);
+    const images = await getImages(folder);
     result.push({ name: albumName, images });
   }
 
