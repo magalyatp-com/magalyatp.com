@@ -1028,6 +1028,7 @@ footer {
     justify-content: center;
     gap: 2.5rem;
     backdrop-filter: blur(16px);
+    z-index: 199;
   }
 
   .nav-links.open { display: flex; }
