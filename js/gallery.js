@@ -231,17 +231,19 @@ async function initEventsGallery() {
     grid.classList.remove('album-view');
 
     if (tab === 'all') {
-      const [eng, wed, prom, evt] = await Promise.all([
+      const [eng, wed, prom, evt, story] = await Promise.all([
         fetchSubfolders('engagements'),
         fetchSubfolders('weddings'),
         fetchSubfolders('proms'),
         fetchSubfolders('events'),
+        fetchSubfolders('storytelling'),
       ]);
       renderAlbumGrid(grid, [
-        ...(eng  || []).map(f => ({ ...f, _category: 'engagements' })),
-        ...(wed  || []).map(f => ({ ...f, _category: 'weddings' })),
-        ...(prom || []).map(f => ({ ...f, _category: 'proms' })),
-        ...(evt  || []).map(f => ({ ...f, _category: 'events' })),
+        ...(eng   || []).map(f => ({ ...f, _category: 'engagements' })),
+        ...(wed   || []).map(f => ({ ...f, _category: 'weddings' })),
+        ...(prom  || []).map(f => ({ ...f, _category: 'proms' })),
+        ...(evt   || []).map(f => ({ ...f, _category: 'events' })),
+        ...(story || []).map(f => ({ ...f, _category: 'storytelling' })),
       ], openAlbum);
     } else {
       const folders = await fetchSubfolders(tab);
