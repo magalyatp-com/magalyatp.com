@@ -1016,7 +1016,14 @@ footer {
 }
 
 @media (max-width: 768px) {
-  .nav { padding: 0 1.5rem; }
+  .nav {
+    padding: 0 1.5rem;
+    /* backdrop-filter causes position:fixed children to be positioned relative
+       to this element instead of the viewport, breaking the full-screen overlay. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #0a0a0a;
+  }
 
   .nav-links {
     display: none;
