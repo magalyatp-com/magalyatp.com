@@ -39,7 +39,8 @@ function apiRequest(endpoint) {
 
 async function getSubfolders(parent) {
   const data = await apiRequest(`folders/${parent}`);
-  return (data.folders || []).map(f => f.name);
+  if (data.error) console.error(`  folders/${parent} error:`, data.error.message);
+  return (data.folders || []).map(f => ({ name: f.name, path: f.path }));
 }
 
 async function getImages(folder) {
@@ -51,10 +52,11 @@ async function getImages(folder) {
       type:        'upload',
       prefix:      folder + '/',
       max_results: '500',
-      resource_type: 'image',
       ...(nextCursor ? { next_cursor: nextCursor } : {}),
     });
     const data = await apiRequest(`resources/image?${qs}`);
+    if (data.error) console.error(`  resources error for ${folder}:`, data.error.message);
+    console.log(`  ${folder}: ${(data.resources || []).length} images`);
     for (const r of (data.resources || [])) {
       results.push(
         `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}.${r.format}`
@@ -67,11 +69,12 @@ async function getImages(folder) {
 }
 
 async function buildCategory(category) {
-  const albums = await getSubfolders(category);
+  const albums = await getSubfolders(`gallery/${category}`);
   const result = [];
 
-  for (const albumName of albums) {
-    const folder = `${category}/${albumName}`;
+  for (const { name: albumName, path: albumPath } of albums) {
+    const folder = albumPath || `gallery/${category}/${albumName}`;
+    console.log(`Fetching images for ${folder}…`);
     const images = await getImages(folder);
     result.push({ name: albumName, images });
   }
