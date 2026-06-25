@@ -1,21 +1,7 @@
 {
   "engagements": [],
   "weddings": [],
-  "proms": [
-    {
-      "name": "2025-04-15-senior-prom",
-      "images": []
-    }
-  ],
+  "proms": [],
   "events": [],
-  "storytelling": [
-    {
-      "name": "2026-01-26-injustice-to-justice-series",
-      "images": []
-    },
-    {
-      "name": "2025-03-20-no-kings-protest",
-      "images": []
-    }
-  ]
+  "storytelling": []
 }

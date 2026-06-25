@@ -73,9 +73,19 @@ async function buildCategory(category) {
   const result = [];
 
   for (const { name: albumName, path: albumPath } of albums) {
-    const folder = albumPath || `gallery/${category}/${albumName}`;
-    console.log(`Fetching images for ${folder}…`);
-    const images = await getImages(folder);
+    // Try without the top-level 'gallery/' prefix first — Cloudinary public_ids
+    // often don't include it even when the folder appears under 'gallery' in the UI.
+    const folderWithGallery    = albumPath || `gallery/${category}/${albumName}`;
+    const folderWithoutGallery = `${category}/${albumName}`;
+
+    console.log(`Fetching images for ${folderWithoutGallery}…`);
+    let images = await getImages(folderWithoutGallery);
+
+    if (images.length === 0) {
+      console.log(`  0 found, retrying with ${folderWithGallery}…`);
+      images = await getImages(folderWithGallery);
+    }
+
     result.push({ name: albumName, images });
   }
 
