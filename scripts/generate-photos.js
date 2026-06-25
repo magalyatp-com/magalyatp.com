@@ -67,11 +67,11 @@ async function getImages(folder) {
 }
 
 async function buildCategory(category) {
-  const albums = await getSubfolders(`gallery/${category}`);
+  const albums = await getSubfolders(category);
   const result = [];
 
   for (const albumName of albums) {
-    const folder = `gallery/${category}/${albumName}`;
+    const folder = `${category}/${albumName}`;
     const images = await getImages(folder);
     result.push({ name: albumName, images });
   }
