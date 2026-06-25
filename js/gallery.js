@@ -62,6 +62,21 @@ async function getManifest() {
   }
 }
 
+function naturalSort(a, b) {
+  const re = /(\d+)|(\D+)/g;
+  const tokensA = a.match(re) || [];
+  const tokensB = b.match(re) || [];
+  for (let i = 0; i < Math.max(tokensA.length, tokensB.length); i++) {
+    if (i >= tokensA.length) return -1;
+    if (i >= tokensB.length) return 1;
+    const na = parseInt(tokensA[i], 10);
+    const nb = parseInt(tokensB[i], 10);
+    if (!isNaN(na) && !isNaN(nb)) { if (na !== nb) return na - nb; }
+    else { const c = tokensA[i].localeCompare(tokensB[i]); if (c !== 0) return c; }
+  }
+  return 0;
+}
+
 async function fetchPhotos(category, albumName) {
   const manifest = await getManifest();
   if (!manifest) return null;
@@ -70,7 +85,8 @@ async function fetchPhotos(category, albumName) {
   if (!album) return [];
   return album.images
     .filter(url => IMG_EXT.test(url))
-    .map(url => ({ name: url.split('/').pop(), url }));
+    .map(url => ({ name: url.split('/').pop(), url }))
+    .sort((a, b) => naturalSort(a.name, b.name));
 }
 
 async function fetchSubfolders(category) {
