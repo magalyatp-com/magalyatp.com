@@ -1,5 +1,3 @@
-const REPO   = 'magalyatp-com/magalyatp.com';
-const BRANCH = 'main';
 const IMG_EXT = /\.(jpg|jpeg|png|webp|gif|avif)$/i;
 
 /* ===== LIGHTBOX ===== */
@@ -49,35 +47,36 @@ const lightbox = (() => {
   return { init, open };
 })();
 
-/* ===== GITHUB API ===== */
-async function fetchPhotos(path) {
-  const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
+/* ===== MANIFEST ===== */
+let _manifest = null;
+
+async function getManifest() {
+  if (_manifest) return _manifest;
   try {
-    const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
-    if (res.status === 404) return [];
+    const res = await fetch('/photos.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data
-      .filter(f => f.type === 'file' && IMG_EXT.test(f.name))
-      .map(f => ({ name: f.name, url: f.download_url }));
+    _manifest = await res.json();
+    return _manifest;
   } catch {
     return null;
   }
 }
 
-async function fetchSubfolders(path) {
-  const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
-  try {
-    const res = await fetch(url, { headers: { Accept: 'application/vnd.github.v3+json' } });
-    if (res.status === 404) return [];
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data.filter(f => f.type === 'dir' && !f.name.startsWith('.'));
-  } catch {
-    return null;
-  }
+async function fetchPhotos(category, albumName) {
+  const manifest = await getManifest();
+  if (!manifest) return null;
+  const albums = manifest[category] || [];
+  const album  = albums.find(a => a.name === albumName);
+  if (!album) return [];
+  return album.images
+    .filter(url => IMG_EXT.test(url))
+    .map(url => ({ name: url.split('/').pop(), url }));
+}
+
+async function fetchSubfolders(category) {
+  const manifest = await getManifest();
+  if (!manifest) return null;
+  return (manifest[category] || []).map(a => ({ name: a.name, _category: null }));
 }
 
 /* ===== FOLDER HELPERS ===== */
@@ -174,10 +173,10 @@ function renderAlbumGrid(grid, folders, onOpen) {
         <span class="album-name">${info.label}</span>
         ${folder._category ? `<span class="album-category">${folder._category}</span>` : ''}
       </div>`;
-    card.addEventListener('click', () => onOpen(folder.path, info.label));
+    card.addEventListener('click', () => onOpen(folder._category, folder.name, info.label));
     grid.appendChild(card);
 
-    fetchPhotos(folder.path).then(photos => {
+    fetchPhotos(folder._category, folder.name).then(photos => {
       if (!photos || photos.length === 0) return;
       const wrap = card.querySelector('.album-thumb-wrap');
       const img  = new Image();
@@ -217,11 +216,11 @@ async function initEventsGallery() {
     });
   }
 
-  async function openAlbum(path, label) {
+  async function openAlbum(category, albumName, label) {
     showLoading(grid);
     grid.classList.remove('album-view');
     showBreadcrumb(label);
-    const photos = await fetchPhotos(path);
+    const photos = await fetchPhotos(category, albumName);
     renderGallery(grid, photos);
   }
 
@@ -233,20 +232,20 @@ async function initEventsGallery() {
 
     if (tab === 'all') {
       const [eng, wed, prom, evt] = await Promise.all([
-        fetchSubfolders('photos/gallery/engagements'),
-        fetchSubfolders('photos/gallery/weddings'),
-        fetchSubfolders('photos/gallery/proms'),
-        fetchSubfolders('photos/gallery/events'),
+        fetchSubfolders('engagements'),
+        fetchSubfolders('weddings'),
+        fetchSubfolders('proms'),
+        fetchSubfolders('events'),
       ]);
       renderAlbumGrid(grid, [
-        ...(eng  || []).map(f => ({ ...f, _category: 'Engagement' })),
-        ...(wed  || []).map(f => ({ ...f, _category: 'Wedding' })),
-        ...(prom || []).map(f => ({ ...f, _category: 'Prom' })),
-        ...(evt  || []).map(f => ({ ...f, _category: 'Event' })),
+        ...(eng  || []).map(f => ({ ...f, _category: 'engagements' })),
+        ...(wed  || []).map(f => ({ ...f, _category: 'weddings' })),
+        ...(prom || []).map(f => ({ ...f, _category: 'proms' })),
+        ...(evt  || []).map(f => ({ ...f, _category: 'events' })),
       ], openAlbum);
     } else {
-      const folders = await fetchSubfolders(`photos/gallery/${tab}`);
-      renderAlbumGrid(grid, folders, openAlbum);
+      const folders = await fetchSubfolders(tab);
+      renderAlbumGrid(grid, (folders || []).map(f => ({ ...f, _category: tab })), openAlbum);
     }
   }
 
@@ -268,7 +267,6 @@ async function initStorytellingGallery() {
   if (!grid) return;
 
   lightbox.init();
-  let loaded = false;
 
   function hideBreadcrumb() {
     breadcrumb.style.display = 'none';
@@ -287,19 +285,23 @@ async function initStorytellingGallery() {
     });
   }
 
-  async function openAlbum(path, label) {
+  async function openAlbum(category, albumName, label) {
     showLoading(grid);
     grid.classList.remove('album-view');
     showBreadcrumb(label);
-    const photos = await fetchPhotos(path);
+    const photos = await fetchPhotos('storytelling', albumName);
     renderGallery(grid, photos);
   }
 
   async function loadAlbums() {
     showLoading(grid);
     grid.classList.remove('album-view');
-    const folders = await fetchSubfolders('photos/gallery/storytelling');
-    renderAlbumGrid(grid, folders, openAlbum);
+    const folders = await fetchSubfolders('storytelling');
+    renderAlbumGrid(
+      grid,
+      (folders || []).map(f => ({ ...f, _category: 'storytelling' })),
+      openAlbum
+    );
   }
 
   loadAlbums();
