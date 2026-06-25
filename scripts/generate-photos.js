@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Fetches the Cloudinary folder/image structure and writes photos.json.
-// Expected Cloudinary folder layout (mirrors the old GitHub layout):
+// Expected Cloudinary folder layout:
 //   gallery/engagements/<album>/
 //   gallery/weddings/<album>/
 //   gallery/proms/<album>/
@@ -22,7 +22,7 @@ if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
 
 const AUTH = Buffer.from(`${API_KEY}:${API_SECRET}`).toString('base64');
 
-function apiRequest(endpoint) {
+function apiGet(endpoint) {
   return new Promise((resolve, reject) => {
     const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}`;
     const req = https.get(url, { headers: { Authorization: `Basic ${AUTH}` } }, res => {
@@ -37,8 +37,33 @@ function apiRequest(endpoint) {
   });
 }
 
+function apiPost(endpoint, payload) {
+  return new Promise((resolve, reject) => {
+    const url  = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${endpoint}`;
+    const body = JSON.stringify(payload);
+    const req  = https.request(url, {
+      method:  'POST',
+      headers: {
+        Authorization:  `Basic ${AUTH}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, res => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { reject(new Error(`JSON parse error: ${data}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 async function getSubfolders(parent) {
-  const data = await apiRequest(`folders/${parent}`);
+  const data = await apiGet(`folders/${parent}`);
   if (data.error) console.error(`  folders/${parent} error:`, data.error.message);
   return (data.folders || []).map(f => ({ name: f.name, path: f.path }));
 }
@@ -48,17 +73,27 @@ async function getImages(folder) {
   let nextCursor = null;
 
   do {
-    // Use asset_folder for Fixed Folder mode (newer Cloudinary accounts).
-    // In this mode folder is stored separately from public_id, so prefix won't match.
-    const qs = new URLSearchParams({
-      asset_folder: folder,
-      max_results:  '500',
+    const payload = {
+      expression:  `asset_folder="${folder}"`,
+      max_results: 500,
       ...(nextCursor ? { next_cursor: nextCursor } : {}),
-    });
-    const data = await apiRequest(`resources?${qs}`);
-    if (data.error) console.error(`  resources error for ${folder}:`, data.error.message);
-    console.log(`  ${folder}: ${(data.resources || []).length} images`);
-    for (const r of (data.resources || [])) {
+    };
+    const data = await apiPost('resources/search', payload);
+
+    if (data.error) {
+      console.error(`  search error for "${folder}":`, data.error.message);
+      break;
+    }
+
+    const resources = data.resources || [];
+    console.log(`  "${folder}": ${resources.length} images`);
+
+    // On first page, show a sample resource so we can verify the structure
+    if (!nextCursor && resources.length > 0) {
+      console.log('  sample resource:', JSON.stringify(resources[0], null, 4));
+    }
+
+    for (const r of resources) {
       const ext = r.format ? `.${r.format}` : '';
       results.push(
         `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${r.public_id}${ext}`
@@ -76,12 +111,11 @@ async function buildCategory(category) {
 
   for (const { name: albumName, path: albumPath } of albums) {
     const folder = albumPath || `gallery/${category}/${albumName}`;
-    console.log(`Fetching images for ${folder}…`);
+    console.log(`Fetching images for "${folder}"…`);
     const images = await getImages(folder);
     result.push({ name: albumName, images });
   }
 
-  // Sort newest-first by date prefix (YYYY-MM-DD) when present
   result.sort((a, b) => {
     const da = a.name.match(/^(\d{4}-\d{2}-\d{2})/);
     const db = b.name.match(/^(\d{4}-\d{2}-\d{2})/);
