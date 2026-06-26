@@ -42,6 +42,14 @@ const lightbox = (() => {
       if (e.key === 'ArrowLeft')  prev();
       if (e.key === 'ArrowRight') next();
     });
+
+    let touchStartX = 0;
+    el.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+    el.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) < 40) return;
+      dx < 0 ? next() : prev();
+    }, { passive: true });
   }
 
   return { init, open };
