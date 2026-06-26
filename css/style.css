@@ -1061,8 +1061,15 @@ footer {
 
   .gallery-section { padding: 2rem 0.75rem 4rem; }
 
-  .lightbox-prev, .lightbox-next { display: none; }
-  .lightbox-img { max-width: 98vw; max-height: 86vh; }
+  .lightbox-prev, .lightbox-next {
+    width: 44px; height: 56px;
+    font-size: 1.6rem;
+    background: rgba(0,0,0,0.45);
+    border: none;
+  }
+  .lightbox-prev { left: 0; }
+  .lightbox-next { right: 0; }
+  .lightbox-img { max-width: 98vw; max-height: 80vh; }
 }
 
 @media (max-width: 480px) {
